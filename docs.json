@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "willow",
-  "name": "模型上下文协议",
+  "name": "模型上下文协议-中文",
   "colors": {
     "primary": "#09090b",
     "light": "#FAFAFA",
@@ -118,9 +118,16 @@
   },
   "seo": {
     "metatags": {
-      "og:image": "https://raw.githubusercontent.com/modelcontextprotocol/docs/2eb6171ddbfeefde349dc3b8d5e2b87414c26250/images/og-image.png"
+      "og:image": "https://raw.githubusercontent.com/modelcontextprotocol/docs/2eb6171ddbfeefde349dc3b8d5e2b87414c26250/images/og-image.png",
+      "og:title": "模型上下文协议 (MCP) - 大语言模型的上下文管理标准 - 中文版",
+      "og:description": "模型上下文协议(MCP)是一个开源的标准协议，用于管理和优化大语言模型的上下文。支持多种编程语言SDK，包括Python、TypeScript、Java和Kotlin。",
+      "description": "模型上下文协议(MCP)是一个开源的标准协议，用于管理和优化大语言模型的上下文。支持多种编程语言SDK，包括Python、TypeScript、Java和Kotlin。",
+      "keywords": "MCP,模型上下文协议,LLM,大语言模型,上下文管理,AI开发,Python SDK,TypeScript SDK,Java SDK,Kotlin SDK",
+      "twitter:card": "summary_large_image",
+      "twitter:title": "模型上下文协议 (MCP)",
+      "twitter:description": "开源的大语言模型上下文管理标准协议"
     },
-    "indexing": "navigable"
+    "indexing": "all"
   },
   "footer": {
     "socials": {
