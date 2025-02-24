@@ -1,79 +1,79 @@
 ---
-title: "For Client Developers"
-description: "Get started building your own client that can integrate with all MCP servers."
+title: "面向客户端开发者"
+description: "学习如何构建一个可以与所有MCP服务器集成的客户端。"
 ---
 
-In this tutorial, you'll learn how to build a LLM-powered chatbot client that connects to MCP servers. It helps to have gone through the [Server quickstart](/quickstart/server) that guides you through the basic of building your first server.
+在本教程中，你将学习如何构建一个连接到MCP服务器的LLM驱动的聊天机器人客户端。建议你先完成[服务器快速入门](/quickstart/server)教程，它会指导你完成构建第一个服务器的基础知识。
 
 <Tabs>
 <Tab title="Python">
 
-[You can find the complete code for this tutorial here.](https://github.com/modelcontextprotocol/quickstart-resources/tree/main/mcp-client)
+[你可以在这里找到本教程的完整代码。](https://github.com/modelcontextprotocol/quickstart-resources/tree/main/mcp-client)
 
-## System Requirements
+## 系统要求
 
-Before starting, ensure your system meets these requirements:
-- Mac or Windows computer
-- Latest Python version installed
-- Latest version of `uv` installed
+在开始之前，请确保你的系统满足以下要求：
+- Mac或Windows电脑
+- 已安装最新版本的Python
+- 已安装最新版本的`uv`
 
-## Setting Up Your Environment
+## 配置环境
 
-First, create a new Python project with `uv`:
+首先，使用`uv`创建一个新的Python项目：
 
 ```bash
-# Create project directory
+# 创建项目目录
 uv init mcp-client
 cd mcp-client
 
-# Create virtual environment
+# 创建虚拟环境
 uv venv
 
-# Activate virtual environment
-# On Windows:
+# 激活虚拟环境
+# Windows系统：
 .venv\Scripts\activate
-# On Unix or MacOS:
+# Unix或MacOS系统：
 source .venv/bin/activate
 
-# Install required packages
+# 安装所需包
 uv add mcp anthropic python-dotenv
 
-# Remove boilerplate files
+# 删除样板文件
 rm hello.py
 
-# Create our main file
+# 创建主文件
 touch client.py
 ```
 
-## Setting Up Your API Key
+## 设置API密钥
 
-You'll need an Anthropic API key from the [Anthropic Console](https://console.anthropic.com/settings/keys).
+你需要从[Anthropic控制台](https://console.anthropic.com/settings/keys)获取一个Anthropic API密钥。
 
-Create a `.env` file to store it:
+创建一个`.env`文件来存储密钥：
 
 ```bash
-# Create .env file
+# 创建.env文件
 touch .env
 ```
 
-Add your key to the `.env` file:
+将你的密钥添加到`.env`文件中：
 ```bash
-ANTHROPIC_API_KEY=<your key here>
+ANTHROPIC_API_KEY=<你的密钥>
 ```
 
-Add `.env` to your `.gitignore`:
+将`.env`添加到`.gitignore`中：
 ```bash
 echo ".env" >> .gitignore
 ```
 
 <Warning>
-Make sure you keep your `ANTHROPIC_API_KEY` secure!
+确保妥善保管你的`ANTHROPIC_API_KEY`！
 </Warning>
 
-## Creating the Client
+## 创建客户端
 
-### Basic Client Structure
-First, let's set up our imports and create the basic client class:
+### 基本客户端结构
+首先，让我们设置导入并创建基本的客户端类：
 
 ```python
 import asyncio
@@ -86,32 +86,32 @@ from mcp.client.stdio import stdio_client
 from anthropic import Anthropic
 from dotenv import load_dotenv
 
-load_dotenv()  # load environment variables from .env
+load_dotenv()  # 从.env加载环境变量
 
 class MCPClient:
     def __init__(self):
-        # Initialize session and client objects
+        # 初始化会话和客户端对象
         self.session: Optional[ClientSession] = None
         self.exit_stack = AsyncExitStack()
         self.anthropic = Anthropic()
-    # methods will go here
+    # 方法将在这里添加
 ```
 
-### Server Connection Management
+### 服务器连接管理
 
-Next, we'll implement the method to connect to an MCP server:
+接下来，我们将实现连接到MCP服务器的方法：
 
 ```python
 async def connect_to_server(self, server_script_path: str):
-    """Connect to an MCP server
+    """连接到MCP服务器
 
-    Args:
-        server_script_path: Path to the server script (.py or .js)
+    参数：
+        server_script_path: 服务器脚本路径（.py或.js文件）
     """
     is_python = server_script_path.endswith('.py')
     is_js = server_script_path.endswith('.js')
     if not (is_python or is_js):
-        raise ValueError("Server script must be a .py or .js file")
+        raise ValueError("服务器脚本必须是.py或.js文件")
 
     command = "python" if is_python else "node"
     server_params = StdioServerParameters(
@@ -126,19 +126,19 @@ async def connect_to_server(self, server_script_path: str):
 
     await self.session.initialize()
 
-    # List available tools
+    # 列出可用工具
     response = await self.session.list_tools()
     tools = response.tools
-    print("\nConnected to server with tools:", [tool.name for tool in tools])
+    print("\n已连接到服务器，可用工具：", [tool.name for tool in tools])
 ```
 
-### Query Processing Logic
+### 查询处理逻辑
 
-Now let's add the core functionality for processing queries and handling tool calls:
+现在让我们添加处理查询和工具调用的核心功能：
 
 ```python
 async def process_query(self, query: str) -> str:
-    """Process a query using Claude and available tools"""
+    """使用Claude和可用工具处理查询"""
     messages = [
         {
             "role": "user",
@@ -153,7 +153,7 @@ async def process_query(self, query: str) -> str:
         "input_schema": tool.inputSchema
     } for tool in response.tools]
 
-    # Initial Claude API call
+    # 初始Claude API调用
     response = self.anthropic.messages.create(
         model="claude-3-5-sonnet-20241022",
         max_tokens=1000,
@@ -161,7 +161,7 @@ async def process_query(self, query: str) -> str:
         tools=available_tools
     )
 
-    # Process response and handle tool calls
+    # 处理响应和工具调用
     tool_results = []
     final_text = []
 
@@ -174,10 +174,10 @@ async def process_query(self, query: str) -> str:
             tool_name = content.name
             tool_args = content.input
 
-            # Execute tool call
+            # 执行工具调用
             result = await self.session.call_tool(tool_name, tool_args)
             tool_results.append({"call": tool_name, "result": result})
-            final_text.append(f"[Calling tool {tool_name} with args {tool_args}]")
+            final_text.append(f"[调用工具 {tool_name}，参数：{tool_args}]")
 
             assistant_message_content.append(content)
             messages.append({
@@ -195,7 +195,7 @@ async def process_query(self, query: str) -> str:
                 ]
             })
 
-            # Get next response from Claude
+            # 获取Claude的下一个响应
             response = self.anthropic.messages.create(
                 model="claude-3-5-sonnet-20241022",
                 max_tokens=1000,
@@ -208,18 +208,18 @@ async def process_query(self, query: str) -> str:
     return "\n".join(final_text)
 ```
 
-### Interactive Chat Interface
-Now we'll add the chat loop and cleanup functionality:
+### 交互式聊天界面
+现在我们将添加聊天循环和清理功能：
 
 ```python
 async def chat_loop(self):
-    """Run an interactive chat loop"""
-    print("\nMCP Client Started!")
-    print("Type your queries or 'quit' to exit.")
+    """运行交互式聊天循环"""
+    print("\nMCP客户端已启动！")
+    print("输入你的查询或输入'quit'退出。")
 
     while True:
         try:
-            query = input("\nQuery: ").strip()
+            query = input("\n查询：").strip()
 
             if query.lower() == 'quit':
                 break
@@ -228,21 +228,21 @@ async def chat_loop(self):
             print("\n" + response)
 
         except Exception as e:
-            print(f"\nError: {str(e)}")
+            print(f"\n错误：{str(e)}")
 
 async def cleanup(self):
-    """Clean up resources"""
+    """清理资源"""
     await self.exit_stack.aclose()
 ```
 
-### Main Entry Point
+### 主入口点
 
-Finally, we'll add the main execution logic:
+最后，我们将添加主执行逻辑：
 
 ```python
 async def main():
     if len(sys.argv) < 2:
-        print("Usage: python client.py <path_to_server_script>")
+        print("用法：python client.py <服务器脚本路径>")
         sys.exit(1)
 
     client = MCPClient()
@@ -257,213 +257,214 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-You can find the complete `client.py` file [here.](https://gist.github.com/zckly/f3f28ea731e096e53b39b47bf0a2d4b1)
+你可以在[这里](https://gist.github.com/zckly/f3f28ea731e096e53b39b47bf0a2d4b1)找到完整的`client.py`文件。
 
-## Key Components Explained
+## 关键组件说明
 
-### 1. Client Initialization
-- The `MCPClient` class initializes with session management and API clients
-- Uses `AsyncExitStack` for proper resource management
-- Configures the Anthropic client for Claude interactions
+### 1. 客户端初始化
+- `MCPClient`类初始化会话管理和API客户端
+- 使用`AsyncExitStack`进行适当的资源管理
+- 配置Anthropic客户端以与Claude交互
 
-### 2. Server Connection
-- Supports both Python and Node.js servers
-- Validates server script type
-- Sets up proper communication channels
-- Initializes the session and lists available tools
+### 2. 服务器连接
+- 支持Python和Node.js服务器
+- 验证服务器脚本类型
+- 设置适当的通信通道
+- 初始化会话并列出可用工具
 
-### 3. Query Processing
-- Maintains conversation context
-- Handles Claude's responses and tool calls
-- Manages the message flow between Claude and tools
-- Combines results into a coherent response
+### 3. 查询处理
+- 维护对话上下文
+- 处理Claude的响应和工具调用
+- 管理Claude和工具之间的消息流
+- 将结果组合成连贯的响应
 
-### 4. Interactive Interface
-- Provides a simple command-line interface
-- Handles user input and displays responses
-- Includes basic error handling
-- Allows graceful exit
+### 4. 交互式界面
+- 提供简单的命令行界面
+- 处理用户输入并显示响应
+- 包含基本错误处理
+- 允许优雅退出
 
-### 5. Resource Management
-- Proper cleanup of resources
-- Error handling for connection issues
-- Graceful shutdown procedures
+### 5. 资源管理
+- 适当清理资源
+- 连接问题的错误处理
+- 优雅的关闭程序
 
-## Common Customization Points
+## 常见定制点
 
-1. **Tool Handling**
-   - Modify `process_query()` to handle specific tool types
-   - Add custom error handling for tool calls
-   - Implement tool-specific response formatting
+1. **工具处理**
+   - 修改`process_query()`以处理特定工具类型
+   - 添加工具调用的自定义错误处理
+   - 实现工具特定的响应格式化
 
-2. **Response Processing**
-   - Customize how tool results are formatted
-   - Add response filtering or transformation
-   - Implement custom logging
+2. **响应处理**
+   - 自定义工具结果的格式化方式
+   - 添加响应过滤或转换
+   - 实现自定义日志记录
 
-3. **User Interface**
-   - Add a GUI or web interface
-   - Implement rich console output
-   - Add command history or auto-completion
+3. **用户界面**
+   - 添加GUI或Web界面
+   - 实现丰富的控制台输出
+   - 添加命令历史或自动完成功能
 
-## Running the Client
+## 运行客户端
 
-To run your client with any MCP server:
+要使用任何MCP服务器运行你的客户端：
 
 ```bash
-uv run client.py path/to/server.py # python server
-uv run client.py path/to/build/index.js # node server
+uv run client.py path/to/server.py # python服务器
+uv run client.py path/to/build/index.js # node服务器
 ```
 
 <Note>
-If you're continuing the weather tutorial from the server quickstart, your command might look something like this: `python client.py .../weather/src/weather/server.py`
+如果你正在继续服务器快速入门中的天气教程，你的命令可能看起来像这样：`python client.py .../weather/src/weather/server.py`
 </Note>
 
-The client will:
-1. Connect to the specified server
-2. List available tools
-3. Start an interactive chat session where you can:
-   - Enter queries
-   - See tool executions
-   - Get responses from Claude
+客户端将：
+1. 连接到指定的服务器
+2. 列出可用工具
+3. 启动交互式聊天会话，你可以：
+   - 输入查询
+   - 查看工具执行情况
+   - 获取Claude的响应
 
-Here's an example of what it should look like if connected to the weather server from the server quickstart:
+以下是连接到服务器快速入门中的天气服务器时的示例界面：
 
 <Frame>
   <img src="/images/client-claude-cli-python.png" />
 </Frame>
 
-## How It Works
+## 工作原理
 
-When you submit a query:
+当你提交查询时：
 
-1. The client gets the list of available tools from the server
-2. Your query is sent to Claude along with tool descriptions
-3. Claude decides which tools (if any) to use
-4. The client executes any requested tool calls through the server
-5. Results are sent back to Claude
-6. Claude provides a natural language response
-7. The response is displayed to you
+1. 客户端从服务器获取可用工具列表
+2. 你的查询连同工具描述一起发送给Claude
+3. Claude决定使用哪些工具（如果需要）
+4. 客户端通过服务器执行请求的工具调用
+5. 结果发送回Claude
+6. Claude提供自然语言响应
+7. 响应显示给你
 
-## Best practices
+## 最佳实践
 
-1. **Error Handling**
-   - Always wrap tool calls in try-catch blocks
-   - Provide meaningful error messages
-   - Gracefully handle connection issues
+1. **错误处理**
+   - 始终使用try-catch块包装工具调用
+   - 提供有意义的错误消息
+   - 优雅地处理连接问题
 
-2. **Resource Management**
-   - Use `AsyncExitStack` for proper cleanup
-   - Close connections when done
-   - Handle server disconnections
+2. **资源管理**
+   - 使用`AsyncExitStack`进行适当的清理
+   - 完成后关闭连接
+   - 处理服务器断开连接
 
-3. **Security**
-   - Store API keys securely in `.env`
-   - Validate server responses
-   - Be cautious with tool permissions
+3. **安全性**
+   - 在`.env`中安全存储API密钥
+   - 验证服务器响应
+   - 谨慎处理工具权限
 
-## Troubleshooting
+## 故障排除
 
-### Server Path Issues
-- Double-check the path to your server script is correct
-- Use the absolute path if the relative path isn't working
-- For Windows users, make sure to use forward slashes (/) or escaped backslashes (\\) in the path
-- Verify the server file has the correct extension (.py for Python or .js for Node.js)
+### 服务器路径问题
+- 仔细检查服务器脚本路径是否正确
+- 如果相对路径不起作用，请使用绝对路径
+- 对于Windows用户，确保使用正斜杠(/)或转义的反斜杠(\\)在路径中
+- 验证服务器文件具有正确的扩展名（.py表示Python或.js表示Node.js）
 
-Example of correct path usage:
+正确路径使用示例：
 ```bash
-# Relative path
+# 相对路径
 uv run client.py ./server/weather.py
 
-# Absolute path
+# 绝对路径
 uv run client.py /Users/username/projects/mcp-server/weather.py
 
-# Windows path (either format works)
+# Windows路径（两种格式都可以）
 uv run client.py C:/projects/mcp-server/weather.py
 uv run client.py C:\\projects\\mcp-server\\weather.py
 ```
 
-### Response Timing
-- The first response might take up to 30 seconds to return
-- This is normal and happens while:
-  - The server initializes
-  - Claude processes the query
-  - Tools are being executed
-- Subsequent responses are typically faster
-- Don't interrupt the process during this initial waiting period
+### 响应时间
+- 第一个响应可能需要长达30秒的时间
+- 这是正常现象，发生在：
+  - 服务器初始化时
+  - Claude处理查询时
+  - 工具执行时
+- 后续响应通常会更快
+- 在初始等待期间不要中断进程
 
-### Common Error Messages
+### 常见错误消息
 
-If you see:
-- `FileNotFoundError`: Check your server path
-- `Connection refused`: Ensure the server is running and the path is correct
-- `Tool execution failed`: Verify the tool's required environment variables are set
-- `Timeout error`: Consider increasing the timeout in your client configuration
-
+如果你看到：
+- `FileNotFoundError`：检查你的服务器路径
+- `Connection refused`：确保服务器正在运行且路径正确
+- `Tool execution failed`：验证工具所需的环境变量是否已设置
+- `Timeout error`：考虑在客户端配置中增加超时时间
 </Tab>
+
+
 
 <Tab title="Java">
 
 <Note>
-This is a quickstart demo based on Spring AI MCP auto-configuration and boot starters. 
-To learn how to create sync and async MCP Clients manually, consult the [Java SDK Client](/sdk/java/mcp-client) documentation
+这是一个基于Spring AI MCP自动配置和启动器的快速入门演示。
+要了解如何手动创建同步和异步MCP客户端，请参考[Java SDK客户端](/sdk/java/mcp-client)文档
 </Note>
 
-This example demonstrates how to build an interactive chatbot that combines Spring AI's Model Context Protocol (MCP) with the [Brave Search MCP Server](https://github.com/modelcontextprotocol/servers/tree/main/src/brave-search). The application creates a conversational interface powered by Anthropic's Claude AI model that can perform internet searches through Brave Search, enabling natural language interactions with real-time web data.
-[You can find the complete code for this tutorial here.](https://github.com/spring-projects/spring-ai-examples/tree/main/model-context-protocol/web-search/brave-chatbot)
+本示例演示如何构建一个结合Spring AI的模型上下文协议（MCP）和[Brave Search MCP服务器](https://github.com/modelcontextprotocol/servers/tree/main/src/brave-search)的交互式聊天机器人。该应用程序创建了一个由Anthropic的Claude AI模型驱动的对话界面，可以通过Brave Search执行互联网搜索，实现与实时网络数据的自然语言交互。
+[你可以在这里找到本教程的完整代码。](https://github.com/spring-projects/spring-ai-examples/tree/main/model-context-protocol/web-search/brave-chatbot)
 
-## System Requirements
+## 系统要求
 
-Before starting, ensure your system meets these requirements:
-- Java 17 or higher
+在开始之前，请确保你的系统满足以下要求：
+- Java 17或更高版本
 - Maven 3.6+
-- npx package manager
-- Anthropic API key (Claude)
-- Brave Search API key
+- npx包管理器
+- Anthropic API密钥（Claude）
+- Brave Search API密钥
 
-## Setting Up Your Environment
+## 配置环境
 
-1. Install npx (Node Package eXecute):
-   First, make sure to install [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
-   and then run:
+1. 安装npx（Node Package eXecute）：
+   首先，确保安装[npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
+   然后运行：
    ```bash
    npm install -g npx
    ```
 
-2. Clone the repository:
+2. 克隆仓库：
    ```bash
    git clone https://github.com/spring-projects/spring-ai-examples.git
    cd model-context-protocol/brave-chatbot
    ```
 
-3. Set up your API keys:
+3. 设置API密钥：
    ```bash
-   export ANTHROPIC_API_KEY='your-anthropic-api-key-here'
-   export BRAVE_API_KEY='your-brave-api-key-here'
+   export ANTHROPIC_API_KEY='你的anthropic-api-密钥'
+   export BRAVE_API_KEY='你的brave-api-密钥'
    ```
 
-4. Build the application:
+4. 构建应用程序：
    ```bash
    ./mvnw clean install
    ```
 
-5. Run the application using Maven:
+5. 使用Maven运行应用程序：
    ```bash
    ./mvnw spring-boot:run
    ```
 
 <Warning>
-Make sure you keep your `ANTHROPIC_API_KEY` and `BRAVE_API_KEY` keys secure!
+请确保安全保管你的`ANTHROPIC_API_KEY`和`BRAVE_API_KEY`密钥！
 </Warning>
 
 
-## How it Works
+## 工作原理
 
-The application integrates Spring AI with the Brave Search MCP server through several components:
+该应用程序通过以下几个组件将Spring AI与Brave Search MCP服务器集成：
 
-### MCP Client Configuration
+### MCP客户端配置
 
-1. Required dependencies in pom.xml:
+1. pom.xml中所需的依赖：
 ```xml
 <dependency>
     <groupId>org.springframework.ai</groupId>
@@ -475,7 +476,7 @@ The application integrates Spring AI with the Brave Search MCP server through se
 </dependency>
 ```
 
-2. Application properties (application.yml):
+2. 应用程序属性配置（application.yml）：
 ```yml
 spring:
   ai:
@@ -493,9 +494,9 @@ spring:
       api-key: ${ANTHROPIC_API_KEY}
 ```
 
-This activates the `spring-ai-mcp-client-spring-boot-starter` to create one or more `McpClient`s based on the provided server configuration.
+这将激活`spring-ai-mcp-client-spring-boot-starter`，根据提供的服务器配置创建一个或多个`McpClient`实例。
 
-3. MCP Server Configuration (`mcp-servers-config.json`):
+3. MCP服务器配置（`mcp-servers-config.json`）：
 ```json
 {
   "mcpServers": {
@@ -513,9 +514,9 @@ This activates the `spring-ai-mcp-client-spring-boot-starter` to create one or m
 }
 ```
 
-### Chat Implementation
+### 聊天实现
 
-The chatbot is implemented using Spring AI's ChatClient with MCP tool integration:
+聊天机器人使用Spring AI的ChatClient并集成MCP工具实现：
 
 ```java
 var chatClient = chatClientBuilder
@@ -525,43 +526,43 @@ var chatClient = chatClientBuilder
     .build();
 ```
 
-Key features:
-- Uses Claude AI model for natural language understanding
-- Integrates Brave Search through MCP for real-time web search capabilities
-- Maintains conversation memory using InMemoryChatMemory
-- Runs as an interactive command-line application
+主要特点：
+- 使用Claude AI模型进行自然语言理解
+- 通过MCP集成Brave Search实现实时网络搜索功能
+- 使用InMemoryChatMemory维护对话记忆
+- 作为交互式命令行应用程序运行
 
-### Build and run 
+### 构建和运行
 
 ```bash
 ./mvnw clean install
 java -jar ./target/ai-mcp-brave-chatbot-0.0.1-SNAPSHOT.jar
 ```
 
-or 
+或者
 
 ```bash
 ./mvnw spring-boot:run
 ```
 
-The application will start an interactive chat session where you can ask questions. The chatbot will use Brave Search when it needs to find information from the internet to answer your queries.
+应用程序将启动一个交互式聊天会话，你可以在其中提问。当聊天机器人需要从互联网查找信息来回答你的问题时，它会使用Brave Search。
 
-The chatbot can:
-- Answer questions using its built-in knowledge
-- Perform web searches when needed using Brave Search
-- Remember context from previous messages in the conversation
-- Combine information from multiple sources to provide comprehensive answers
+聊天机器人可以：
+- 使用内置知识回答问题
+- 在需要时使用Brave Search进行网络搜索
+- 记住对话中的上下文信息
+- 整合多个来源的信息提供全面的答案
 
-### Advanced Configuration
+### 高级配置
 
-The MCP client supports additional configuration options:
+MCP客户端支持以下额外配置选项：
 
-- Client customization through `McpSyncClientCustomizer` or `McpAsyncClientCustomizer`
-- Multiple clients with multiple transport types: `STDIO` and `SSE` (Server-Sent Events)
-- Integration with Spring AI's tool execution framework
-- Automatic client initialization and lifecycle management
+- 通过`McpSyncClientCustomizer`或`McpAsyncClientCustomizer`进行客户端定制
+- 支持多个客户端和多种传输类型：`STDIO`和`SSE`（服务器发送事件）
+- 与Spring AI的工具执行框架集成
+- 自动客户端初始化和生命周期管理
 
-For WebFlux-based applications, you can use the WebFlux starter instead:
+对于基于WebFlux的应用程序，你可以使用WebFlux启动器：
 
 ```xml
 <dependency>
@@ -570,41 +571,41 @@ For WebFlux-based applications, you can use the WebFlux starter instead:
 </dependency>
 ```
 
-This provides similar functionality but uses a WebFlux-based SSE transport implementation, recommended for production deployments.
+这提供了类似的功能，但使用基于WebFlux的SSE传输实现，推荐用于生产部署。
 
 </Tab>
 
 </Tabs>
 
-## Next steps
+## 后续步骤
 
 <CardGroup cols={2}>
   <Card
-    title="Example servers"
+    title="示例服务器"
     icon="grid"
     href="/examples"
   >
-    Check out our gallery of official MCP servers and implementations
+    查看我们的官方MCP服务器和实现示例库
   </Card>
   <Card
-    title="Clients"
+    title="客户端"
     icon="cubes"
     href="/clients"
   >
-    View the list of clients that support MCP integrations
+    浏览支持MCP集成的客户端列表
   </Card>
   <Card
-    title="Building MCP with LLMs"
+    title="使用LLMs构建MCP"
     icon="comments"
     href="/building-mcp-with-llms"
   >
-    Learn how to use LLMs like Claude to speed up your MCP development
+    了解如何使用Claude等LLMs加速MCP开发
   </Card>
    <Card
-    title="Core architecture"
+    title="核心架构"
     icon="sitemap"
     href="/docs/concepts/architecture"
   >
-    Understand how MCP connects clients, servers, and LLMs
+    理解MCP如何连接客户端、服务器和LLMs
   </Card>
 </CardGroup>
