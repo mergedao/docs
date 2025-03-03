@@ -136,10 +136,6 @@
   },
   "redirects": [
     {
-      "source": "/",
-      "destination": "/introduction"
-    },
-    {
       "source": "/tutorials/building-a-client",
       "destination": "/quickstart/client"
     },
